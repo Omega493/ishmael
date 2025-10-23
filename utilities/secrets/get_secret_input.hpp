@@ -19,12 +19,4 @@
 
 #include <string>
 
-#if defined (_WIN32)
-#include <Windows.h>
-#include <conio.h>
-#else
-#include <termios.h>
-#include <unistd.h>
-#endif
-
 std::string get_secret_input();

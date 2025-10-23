@@ -1,79 +1,100 @@
 # Ishmael
 
-A C++ Discord bot built using the [dpp](https://dpp.dev/) library.
+A C++ Discord bot built using the [dpp](https://dpp.dev/) library. This project includes moderation and utility commands.
 
 ## Prerequisites (Windows)
 
 Before building, you must have the following tools installed on your system:
 
-  * **Git:** For cloning this repository and `vcpkg`.
-  * **Visual Studio 2019 or 2022:** With the "Desktop development with C++" workload installed.
-  * **CMake:** Version 3.16 or newer.
-  * **vcpkg:** Used to install the required dependencies.
+  * **Git:** For cloning this repository and `vcpkg`
+  * **Visual Studio 2019 or 2022:** With the "Desktop development with C++" workload installed
+  * **CMake:** Version 3.16 or newer
+  * **Ninja:** The build system
+   - Note: The easiest way to get CMake and Ninja is to select "C++ CMake tools for Windows" in the Visual Studio Installer's "Individual components" tab.
+  * A C++ compiler that supports C++20
+  * **vcpkg:** The C++ package manager from Microsoft
 
 ## Dependencies
 
 This project requires the following libraries:
 
-  * dpp (D++ Library)
-  * libsodium (via the `unofficial-sodium` vcpkg package on Windows)
+  * dpp (D++ library)
+  * libsodium
 
 ## Build Instructions (Windows)
 
 1.  **Clone the Repository**
 
-    ```bash
-    git clone https://github.com/Omega493/ishmael-prod.git
-    cd ishmael-prod
+    The #include in the source files use a relative path sceheme. Thus, the folder/file names must be accurate (my fault, I know). I'll try to fix it soon. But for now, cloning the repo is a two step process - first clone the repo, and then rename it.
+
+    ```powershell
+    git clone https://github.com/Omega493/ishmael.git
+    Rename-Item -Path "ishmael" -NewName "temp"; Rename-Item -Path "temp" -NewName "Ishmael"
+    cd Ishmael
     ```
 
-2.  **Set Up vcpkg**
+2.  **Install vcpkg and Dependencies**:
 
-    If you do not already have `vcpkg` installed, clone and bootstrap it.
+    * Choose a directory to install `vcpkg`, such as `C:\dev\vcpkg`. Avoid paths with spaces like `Program Files`.
+    * Using Windows Terminal, clone and bootstrap `vcpkg`:
+      ```powershell
+      git clone https://github.com/microsoft/vcpkg.git
+      cd vcpkg
+      .\bootstrap-vcpkg.bat
+      ```
+    * Install the dependencies using the `x64-windows` triplet.
+      ```powershell
+      .\vcpkg.exe install dpp:x64-windows libsodium:x64-windows
+      ```
+    * Create a new system environment variable:
+        - Variable name: `CMAKE_TOOLCHAIN_FILE`
+        - Variable value: `[path-to-vcpkg]/scripts/buildsystems/vcpkg.cmake`
+    * Restart your terminal session for the new environment variable to take effect.
 
-    ```bash
-    git clone https://github.com/microsoft/vcpkg.git
-    .\vcpkg\bootstrap-vcpkg.bat
-    .\vcpkg\vcpkg integrate install
-    ```
-
-3.  **Install Dependencies via vcpkg**
-
-    Use `vcpkg` to install the required libraries. For a 64-bit build, use the `x64-windows` triplet.
-
-    ```bash
-    .\vcpkg\vcpkg install dpp:x64-windows unofficial-sodium:x64-windows
-    ```
+3. **Set Up Build Environment**
+    
+    All subsequent commands must be run from a `Developer Command Prompt for VS 2022`. This ensures that the C++ compiler (`cl.exe`), CMake, and Ninja are all available in your terminal's PATH. You can find this in your Start Menu (e.g., "x64 Native Tools Command Prompt for VS 2022").
 
 4.  **Configure with CMake**
 
-    Create a build directory and run CMake to generate the build files. You must provide the path to the `vcpkg.cmake` toolchain file (replace [path-to-vcpkg] with the correct path to your vcpkg installation).
+    In the developer command prompt, head to the your `Ishmael` directory. Run CMake using a preset to generate the build files. This will automatically select the generator (Ninja) and create the correct build directory as defined in `CMakePresets.json`.
+    Choose one of the following presets to configure:
 
-    ```bash
-    cmake -B build -S . -A x64 -DCMAKE_TOOLCHAIN_FILE="[path-to-vcpkg]/scripts/buildsystems/vcpkg.cmake"
-    ```
+    * **To Configure for Debug:**
+      ```powershell
+      cmake --preset x64-debug
+      ```
+
+    * **To Configure for Release:**
+      ```powershell
+      cmake --preset x64-release
+      ```
 
 5.  **Build the Project**
 
-    Compile the project using CMake's build command.
+    Compile the project using the build preset that matches the configuration you just set up.
 
-    Build in Debug configuration (default):
-
-    ```bash
-    cmake --build build
+    * **If you configured for Debug:** 
+    ```powershell
+    cmake --build --preset x64-debug
     ```
-    Or, to build in Release configuration:
-    
-    ```bash
-    cmake --build build --config Release
+    * **If you configured for Release:**
+    ```powershell
+    cmake --build --preset x64-release
     ```
 
 6.  **Run**
 
-    The executable will be located in the `build` directory, inside the configuration folder (e.g., `Debug` or `Release`).
+    The executable will be located in the preset-specific directory inside `build/windows/`.
 
-    ```bash
-    .\build\Debug\Ishmael.exe
-    ```
+    * **If you built Debug:**
+      ```powershell
+      .\build\windows\x64-debug\Ishmael.exe
+      ```
+    * **If you built Release:**
+      ```powershell
+      .\build\windows\x64-release\Ishmael.exe
+      ```
 
-This project hasn't yet been tested on Debian / Ubuntu, so no build instructions for now.
+
+#### I've not yet tested the bot on Ubuntu/Debian, so no build instructions for those OS for now.

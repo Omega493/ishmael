@@ -34,7 +34,13 @@ public:
 	Logger();
 	~Logger();
 
-	void log(LogLevel level, const std::string& message);
+	/*
+	* @brief The loging function
+	* @param level The log level of the message
+	* @param message The message itself
+	* @param to_be_printed If true, prints the message to the terminal
+	*/
+	void log(const LogLevel level, const std::string& message, const bool to_be_printed);
 private:
 	std::ofstream log_file;
 };

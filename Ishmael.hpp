@@ -1,4 +1,4 @@
-﻿/*
+/*
 * Copyright (C) 2025 Omega493
 
 * This program is free software: you can redistribute it and/or modify
@@ -18,11 +18,12 @@
 #pragma once
 
 #include <string>
+#include <vector>
 #include <map>
 #include <functional>
 #include <cstdint>
 
-#include "../Ishmael/logger/logger.hpp"
+#include "../Ishmael/utilities/logger/logger.hpp"
 
 #include <dpp/dispatcher.h>
 #include <dpp/cluster.h>

@@ -4,9 +4,9 @@ project("Ishmael")
 
 add_executable(Ishmael "Ishmael.cpp" "Ishmael.hpp"
     # Bot's utilities
-    "secrets/secrets.hpp" "secrets/get_secret_input.hpp" "secrets/get_secret_input.cpp"
-    "secrets/secrets.cpp" "logger/logger.hpp" "logger/logger.cpp"
-    "utilities/utilities.hpp" "utilities/utilities.cpp"
+    "utilities/secrets/get_secret_input.hpp" "utilities/secrets/get_secret_input.cpp" "utilities/secrets/secrets.hpp"
+    "utilities/secrets/secrets.cpp" "utilities/logger/logger.hpp" "utilities/logger/logger.cpp"
+    "utilities/other_utils/other_utils.hpp" "utilities/other_utils/other_utils.cpp"
     
     # Bot's command handler
     "commands/ICommands.hpp" "commands/ICommands.cpp"
@@ -15,7 +15,7 @@ add_executable(Ishmael "Ishmael.cpp" "Ishmael.hpp"
     "commands/utility/ping.cpp" "commands/utility/stats.cpp"
 
     # Moderation commands utilities
-    "commands/moderation/moderation_utils.hpp" "commands/moderation/moderation_utils.cpp"
+    "commands/moderation/mod_utils.hpp" "commands/moderation/mod_utils.cpp"
 
     # Moderation commands
     "commands/moderation/role_edits/role_add.cpp")

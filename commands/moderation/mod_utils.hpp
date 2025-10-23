@@ -19,30 +19,15 @@
 
 #include <string>
 #include <cstdint>
-#include <optional>
 #include <variant>
+
+#include "../Ishmael/utilities/other_utils/other_utils.hpp"
 
 #include <dpp/cluster.h>
 #include <dpp/dispatcher.h>
 #include <dpp/guild.h>
 #include <dpp/permissions.h>
 #include <dpp/role.h>
-
-enum class CommandType {
-	RoleEdit,
-	Ban,
-	Unknown
-};
-
-// For the JSON
-void load_guild_settings();
-void write_guild_settings_to_file();
-std::optional<uint64_t> get_log_channel(uint64_t guild_id, CommandType command_type);
-void save_log_channel(uint64_t guild_id, uint64_t channel_id, CommandType command_type);
-
-// Backup handling
-void backup_guild_settings(const std::string& backup_file_path);
-void initialize_backups(dpp::cluster& bot);
 
 // Utility functions
 dpp::permission calculate_permissions(const dpp::guild_member& member);

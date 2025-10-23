@@ -15,6 +15,8 @@
 * along with this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
+#pragma once
+
 #include "logger.hpp"
 
 #include <iostream>
@@ -32,47 +34,53 @@ Logger::Logger() {
 
 	log_file.open(file_name);
 
-	if (log_file.is_open()) log(LogLevel::Info, "Logger initialized");
+	if (log_file.is_open()) log(LogLevel::Info, "Logger initialized", false);
 	else std::cerr << std::format("Error: Couldn't open log file `{}`\nThe bot would run, but without logging features", file_name);
 }
 
 Logger::~Logger() {
-	if (log_file.is_open()) log(LogLevel::Info, "Logger shutting down");
+	if (log_file.is_open()) log(LogLevel::Info, "Logger shutting down", false);
 }
 
-void Logger::log(LogLevel level, const std::string& message) {
+void Logger::log(const LogLevel level, const std::string& message, const bool to_be_printed) {
 	if (!log_file.is_open()) return;
 
 	const auto now = std::chrono::system_clock::now();
 	std::string timestamp = std::format("[{:%d %m %Y %a %H:%M:%S}]", now);
 
-	std::string level_to_str;
+	std::string level_to_str = "";
 
 	switch (level) {
-	case LogLevel::Info: {
-		level_to_str = "[INFO]";
-		break;
-	}
-	case LogLevel::Warn: {
-		level_to_str = "[WARN]";
-		break;
-	}
-	case LogLevel::Error: {
-		level_to_str = "[ERROR]";
-		break;
-	}
-	case LogLevel::Critical: {
-		level_to_str = "[CRITICAL]";
-		break;
-	}
-	case LogLevel::Exception: {
-		level_to_str = "[EXCEPTION THROWN]";
-		break;
-	}
-	default: {
-		level_to_str = "[LEVEL UNKNOWN]";
-		break;
-	}
+		case LogLevel::Info: {
+			level_to_str = "[INFO]";
+			if (to_be_printed) std::cout << level_to_str + ' ' + message << std::endl;
+			break;
+		}
+		case LogLevel::Warn: {
+			level_to_str = "[WARN]";
+			if (to_be_printed) std::cout << level_to_str + ' ' + message << std::endl;
+			break;
+		}
+		case LogLevel::Error: {
+			level_to_str = "[ERROR]";
+			if (to_be_printed) std::cerr << level_to_str + ' ' + message << std::endl;
+			break;
+		}
+		case LogLevel::Critical: {
+			level_to_str = "[CRITICAL]";
+			if (to_be_printed) std::cerr << level_to_str + ' ' + message << std::endl;
+			break;
+		}
+		case LogLevel::Exception: {
+			level_to_str = "[EXCEPTION THROWN]";
+			if (to_be_printed) std::cerr << level_to_str + ' ' + message << std::endl;
+			break;
+		}
+		default: {
+			level_to_str = "[LEVEL UNKNOWN]";
+			if (to_be_printed) std::cerr << level_to_str + ' ' + message << std::endl;
+			break;
+		}
 	}
 
 	log_file << std::format("{} {} {}", timestamp, level_to_str, message) << std::endl;

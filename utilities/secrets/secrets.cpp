@@ -15,6 +15,8 @@
 * along with this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
+#pragma once
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -131,4 +133,4 @@ const std::map<std::string, std::string> secrets = [] {
 		std::cerr << "\nProgram will now terminate" << std::endl;
 		std::exit(EXIT_FAILURE);
 	}
-	}();
+}();

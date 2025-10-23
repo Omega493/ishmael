@@ -23,8 +23,8 @@
 #include <cstdint>
 
 #include "../Ishmael/Ishmael.hpp"
-#include "../Ishmael/secrets/secrets.hpp"
-#include "../Ishmael/commands/moderation/moderation_utils.hpp"
+#include "../Ishmael/utilities/secrets/secrets.hpp"
+#include "../Ishmael/commands/moderation/mod_utils.hpp"
 #include "../Ishmael/commands/ICommands.hpp"
 
 #include <dpp/appcommand.h>
@@ -51,7 +51,7 @@ static void handle_role_log_select(dpp::cluster& bot, const dpp::select_click_t&
 		event.co_edit_original_response(dpp::message(msg_content).set_flags(dpp::m_ephemeral));
 	}
 	catch (const std::exception& e) {
-		get_logger().log(LogLevel::Error, "Failed to save log channel to JSON: " + std::string(e.what()));
+		get_logger().log(LogLevel::Error, "Failed to save log channel to JSON: " + std::string(e.what()), false);
 		event.co_edit_original_response(dpp::message("An error occurred while saving your selection. Please inform <@" + secrets.at("OWNER_ID") + "> of this.").set_flags(dpp::m_ephemeral));
 	}
 }
@@ -199,7 +199,7 @@ static void handle_role_add(dpp::cluster& bot, const dpp::slashcommand_t& event)
 				bot.guild_member_add_role(g->id, target_by_id, role_to_add->id,
 					[&bot, event, role_to_add, target_by_id, target_user, issuer_member](const dpp::confirmation_callback_t& add_role_callback) {
 						if (add_role_callback.is_error()) {
-							get_logger().log(LogLevel::Error, "Failed to add role: " + add_role_callback.get_error().message);
+							get_logger().log(LogLevel::Error, "Failed to add role: " + add_role_callback.get_error().message, false);
 							event.co_edit_original_response(dpp::message("An error occured while trying to add the role. Please inform <@" + std::string(secrets.at("OWNER_ID")) + "> of this."));
 							return;
 						}
@@ -214,17 +214,17 @@ static void handle_role_add(dpp::cluster& bot, const dpp::slashcommand_t& event)
 			});
 	}
 	catch (const dpp::exception& e) {
-		get_logger().log(LogLevel::Exception, "D++ exception thrown in `/role_add`: " + std::string(e.what()));
+		get_logger().log(LogLevel::Exception, "D++ exception thrown in `/role_add`: " + std::string(e.what()), false);
 		event.co_edit_original_response(dpp::message("An exception was thrown while processing this command. Please inform <@" + std::string(secrets.at("OWNER_ID")) + "> of this.")
 			.set_flags(dpp::m_ephemeral));
 	}
 	catch (const std::exception& e) {
-		get_logger().log(LogLevel::Exception, "Standard exception thrown in `/role_add`: " + std::string(e.what()));
+		get_logger().log(LogLevel::Exception, "Standard exception thrown in `/role_add`: " + std::string(e.what()), false);
 		event.co_edit_original_response(dpp::message("An exception was thrown while processing this command. Please inform <@" + std::string(secrets.at("OWNER_ID")) + "> of this.")
 			.set_flags(dpp::m_ephemeral));
 	}
 	catch (...) {
-		get_logger().log(LogLevel::Exception, "Unknown exception thrown in `/role_add`");
+		get_logger().log(LogLevel::Exception, "Unknown exception thrown in `/role_add`", false);
 		event.co_edit_original_response(dpp::message("An exception was thrown while processing this command. Please inform <@" + std::string(secrets.at("OWNER_ID")) + "> of this.")
 			.set_flags(dpp::m_ephemeral));
 	}
