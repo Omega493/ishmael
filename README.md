@@ -23,8 +23,8 @@ This project requires the following libraries:
 1.  **Clone the Repository**
 
     ```bash
-    git clone https://github.com/Omega493/ishmael-prod.git
-    cd ishmael-prod
+    git clone https://github.com/Omega493/ishmael.git
+    cd ishmael
     ```
 
 2.  **Set Up vcpkg**
