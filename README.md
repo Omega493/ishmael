@@ -85,16 +85,10 @@ This project requires the following libraries:
 
 6.  **Run**
 
-    The executable will be located in the preset-specific directory inside `build/windows/`.
+    The executable will be located in the `build` directory, inside the configuration folder (e.g., `Debug` or `Release`).
 
-    * **If you built Debug:**
-      ```powershell
-      .\build\windows\x64-debug\Ishmael.exe
-      ```
-    * **If you built Release:**
-      ```powershell
-      .\build\windows\x64-release\Ishmael.exe
-      ```
+    ```bash
+    .\build\Debug\Ishmael.exe
+    ```
 
-
-#### I've not yet tested the bot on Ubuntu/Debian, so no build instructions for those OS for now.
+This project hasn't yet been tested on Debian / Ubuntu, so no build instructions for now.
