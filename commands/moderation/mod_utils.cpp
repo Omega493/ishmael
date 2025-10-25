@@ -23,10 +23,10 @@
 #include <optional>
 #include <type_traits>
 
-#include "../Ishmael/commands/moderation/mod_utils.hpp"
-#include "../Ishmael/Ishmael.hpp"
-#include "../Ishmael/utilities/logger/logger.hpp"
-#include "../Ishmael/utilities/other_utils/other_utils.hpp"
+#include "mod_utils.hpp"
+#include "Ishmael.hpp"
+#include "utilities/logger/logger.hpp"
+#include "utilities/other_utils/other_utils.hpp"
 
 #include <dpp/appcommand.h>
 #include <dpp/cache.h>
@@ -139,12 +139,12 @@ void send_audit_log(dpp::cluster& bot, const dpp::slashcommand_t& event, Command
 		bot.message_create(dpp::message(log_channel_id, log_embed));
 	}
 	catch (const dpp::exception& e) {
-		get_logger().log(LogLevel::Exception, "D++ exception thrown while trying to send audit log embed: " + std::string(e.what()), false);
+		get_logger()->log(LogLevel::Exception, "D++ exception thrown while trying to send audit log embed: " + std::string(e.what()), false);
 	}
 	catch (const std::exception& e) {
-		get_logger().log(LogLevel::Exception, "Standard exception thrown while trying to send audit log embed: `" + std::string(e.what()), false);
+		get_logger()->log(LogLevel::Exception, "Standard exception thrown while trying to send audit log embed: `" + std::string(e.what()), false);
 	}
 	catch (...) {
-		get_logger().log(LogLevel::Exception, "Unknown exception thrown while trying to send audit log embed", false);
+		get_logger()->log(LogLevel::Exception, "Unknown exception thrown while trying to send audit log embed", false);
 	}
 }

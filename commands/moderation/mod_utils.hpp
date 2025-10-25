@@ -21,7 +21,7 @@
 #include <cstdint>
 #include <variant>
 
-#include "../Ishmael/utilities/other_utils/other_utils.hpp"
+#include "utilities/other_utils/other_utils.hpp"
 
 #include <dpp/cluster.h>
 #include <dpp/dispatcher.h>

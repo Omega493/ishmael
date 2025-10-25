@@ -31,8 +31,8 @@
 #include <memory>
 
 #include "other_utils.hpp"
-#include "../Ishmael/Ishmael.hpp"
-#include "../Ishmael/utilities/logger/logger.hpp"
+#include "Ishmael.hpp"
+#include "utilities/logger/logger.hpp"
 
 #include <dpp/cluster.h>
 #include <dpp/timer.h>
@@ -66,13 +66,13 @@ static void backup_guild_settings(const std::string& backup_file_path) {
 
         std::ofstream backup_file(backup_file_path);
         if (!backup_file.is_open()) {
-            get_logger().log(LogLevel::Critical, "Couldn't open `" + backup_file_path + "` for writing", true);
+            get_logger()->log(LogLevel::Critical, "Couldn't open `" + backup_file_path + "` for writing", true);
             return;
         }
         backup_file << guild_settings_json.dump(4);
     }
     catch (const std::filesystem::filesystem_error& e) {
-        get_logger().log(LogLevel::Exception, "File system exception while creating backup directory for `" + backup_file_path + "`: " + e.what(), true);
+        get_logger()->log(LogLevel::Exception, "File system exception while creating backup directory for `" + backup_file_path + "`: " + e.what(), true);
     }
 }
 
@@ -80,7 +80,7 @@ void load_guild_settings() {
 	std::scoped_lock lock(settings_mutex);
 	std::ifstream file(guild_settings_file_path);
 	if (!file.is_open()) {
-		get_logger().log(LogLevel::Info, guild_settings_file_path + " not found, creating a new one", true);
+		get_logger()->log(LogLevel::Info, guild_settings_file_path + " not found, creating a new one", true);
 
 		std::filesystem::create_directory("data");
 
@@ -92,17 +92,17 @@ void load_guild_settings() {
 	else {
 		try {
 			file >> guild_settings_json;
-			get_logger().log(LogLevel::Info, "Guild settings loaded from " + guild_settings_file_path, true);
+			get_logger()->log(LogLevel::Info, "Guild settings loaded from " + guild_settings_file_path, true);
 		}
 		catch (json::parse_error& e) {
-			get_logger().log(LogLevel::Exception, "Exception thrown while parsing " + guild_settings_file_path + ": " + e.what() + ". Initialized empty settings.", true);
+			get_logger()->log(LogLevel::Exception, "Exception thrown while parsing " + guild_settings_file_path + ": " + e.what() + ". Initialized empty settings.", true);
 			guild_settings_json = json::object(); // Use empty settings to prevent crash
 		}
 	}
 }
 
 void initialize_backups(dpp::cluster& bot) {
-	get_logger().log(LogLevel::Info, "Performing initial backups on startup", true);
+	get_logger()->log(LogLevel::Info, "Performing initial backups on startup", true);
 	backup_guild_settings("backups/backup-daily/guild_settings.json");
 	backup_guild_settings("backups/backup-per-12h/guild_settings.json");
 	backup_guild_settings("backups/backup-hourly/guild_settings.json");
@@ -123,7 +123,7 @@ void initialize_backups(dpp::cluster& bot) {
 
 		*recurring_callback_ptr =
 			[&bot, path, repeat_interval_s, weak_callback_ptr](dpp::timer handle) {
-				get_logger().log(LogLevel::Info, "Performing recurring backup for: " + path, true);
+				get_logger()->log(LogLevel::Info, "Performing recurring backup for: " + path, true);
 				backup_guild_settings(path);
 
 				// Reschedule this same callback to run again
@@ -138,7 +138,7 @@ void initialize_backups(dpp::cluster& bot) {
 
 				bot.stop_timer(one_shot_timer);
 
-				get_logger().log(LogLevel::Info, "Performing first scheduled backup for: " + path, true);
+				get_logger()->log(LogLevel::Info, "Performing first scheduled backup for: " + path, true);
 				backup_guild_settings(path);
 
 				// Start the recurring timer
@@ -172,13 +172,13 @@ void initialize_backups(dpp::cluster& bot) {
 	// 00:00 UTC & 12:00 UTC backup (backup-per-12h)
 	uint64_t seconds_to_next_12_hr_mark = twelve_hours - (seconds_past_midnight % twelve_hours);
 
-	get_logger().log(LogLevel::Info, "Scheduling backups", true);
+	get_logger()->log(LogLevel::Info, "Scheduling backups", true);
 
-	get_logger().log(LogLevel::Info, "Next hourly backup (backup-hourly) in " + convert_time(seconds_to_next_hour) + " seconds", true);
+	get_logger()->log(LogLevel::Info, "Next hourly backup (backup-hourly) in " + convert_time(seconds_to_next_hour) + " seconds", true);
 	
-	get_logger().log(LogLevel::Info, "Next 12-hour backup (backup-per-12h) in " + convert_time(seconds_to_next_12_hr_mark) + " seconds.", true);
+	get_logger()->log(LogLevel::Info, "Next 12-hour backup (backup-per-12h) in " + convert_time(seconds_to_next_12_hr_mark) + " seconds.", true);
 
-	get_logger().log(LogLevel::Info, "Next 00:00 UTC backup (backup-daily) in " + convert_time(seconds_to_next_midnight) + " seconds.", true);
+	get_logger()->log(LogLevel::Info, "Next 00:00 UTC backup (backup-daily) in " + convert_time(seconds_to_next_midnight) + " seconds.", true);
 
 	// Perform the scheduled backups
 	schedule_recurring_backup("backups/backup-hourly/guild_settings.json", seconds_to_next_hour, one_hour);
@@ -197,7 +197,7 @@ void write_guild_settings_to_file() {
 
 	std::ofstream file(guild_settings_file_path);
 	if (!file.is_open()) {
-		get_logger().log(LogLevel::Critical, "Couldn't open " + guild_settings_file_path + " for writing", true);
+		get_logger()->log(LogLevel::Critical, "Couldn't open " + guild_settings_file_path + " for writing", true);
 		return;
 	}
 	// Write with an indent of 4 spaces
@@ -220,7 +220,7 @@ std::optional<uint64_t> get_log_channel(uint64_t guild_id, CommandType command_t
 			case CommandType::BanEdit: return "ban_edit_logging_channel_id";
 			default: return "general_logging_channel_id";
 			}
-			}();
+		}();
 
 		if (guild_settings_json[guild_id_str].contains(channel_type)) { // Check if the specific key exists in our JSON
 			return guild_settings_json[guild_id_str][channel_type].get<uint64_t>();

@@ -21,8 +21,8 @@
 #include <ctime>
 #include <exception>
 
-#include "../Ishmael/Ishmael.hpp"
-#include "../Ishmael/utilities/secrets/secrets.hpp"
+#include "Ishmael.hpp"
+#include "utilities/secrets/secrets.hpp"
 
 #include <dpp/dispatcher.h>
 #include <dpp/discordclient.h>
@@ -67,17 +67,17 @@ static void handle_ping(dpp::cluster& bot, const dpp::slashcommand_t& event) {
 		event.reply(dpp::message(event.command.channel_id, embed).set_flags(dpp::m_ephemeral));
 	}
 	catch (const dpp::exception& e) {
-		get_logger().log(LogLevel::Exception, "D++ exception thrown in `/ping`: " + std::string(e.what()), false);
+		get_logger()->log(LogLevel::Exception, "D++ exception thrown in `/ping`: " + std::string(e.what()), false);
 		event.reply(dpp::message("An exception was thrown while processing this command. Please inform <@" + std::string(secrets.at("OWNER_ID")) + "> of this.")
 			.set_flags(dpp::m_ephemeral));
 	}
 	catch (const std::exception& e) {
-		get_logger().log(LogLevel::Exception, "Standard exception thrown in `/ping`: " + std::string(e.what()), false);
+		get_logger()->log(LogLevel::Exception, "Standard exception thrown in `/ping`: " + std::string(e.what()), false);
 		event.reply(dpp::message("An exception was thrown while processing this command. Please inform <@" + std::string(secrets.at("OWNER_ID")) + "> of this.")
 			.set_flags(dpp::m_ephemeral));
 	}
 	catch (...) {
-		get_logger().log(LogLevel::Exception, "Unknown exception thrown in `/ping`", false);
+		get_logger()->log(LogLevel::Exception, "Unknown exception thrown in `/ping`", false);
 		event.reply(dpp::message("An exception was thrown while processing this command. Please inform <@" + std::string(secrets.at("OWNER_ID")) + "> of this.")
 			.set_flags(dpp::m_ephemeral));
 	}

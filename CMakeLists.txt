@@ -6,6 +6,7 @@ add_executable(Ishmael "Ishmael.cpp" "Ishmael.hpp"
     # Bot's utilities
     "utilities/secrets/get_secret_input.hpp" "utilities/secrets/get_secret_input.cpp" "utilities/secrets/secrets.hpp"
     "utilities/secrets/secrets.cpp" "utilities/logger/logger.hpp" "utilities/logger/logger.cpp"
+    "utilities/console_utils/console_utils.hpp" "utilities/console_utils/console_utils.cpp"
     "utilities/other_utils/other_utils.hpp" "utilities/other_utils/other_utils.cpp"
     
     # Bot's command handler
@@ -20,7 +21,7 @@ add_executable(Ishmael "Ishmael.cpp" "Ishmael.hpp"
     # Moderation commands
     "commands/moderation/role_edits/role_add.cpp")
 
-target_include_directories(Ishmael PUBLIC ${CMAKE_SOURCE_DIR})
+target_include_directories(Ishmael PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 # DPP
 find_package(dpp REQUIRED)

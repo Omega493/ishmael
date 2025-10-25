@@ -16,15 +16,15 @@
 */
 
 #pragma once
-
-#include "logger.hpp"
-
 #include <iostream>
 #include <string>
 #include <fstream>
 #include <chrono>
 #include <format>
 #include <filesystem>
+
+#include "logger.hpp"
+#include "utilities/console_utils/console_utils.hpp"
 
 Logger::Logger() {
 	std::filesystem::create_directory("logs");
@@ -35,7 +35,8 @@ Logger::Logger() {
 	log_file.open(file_name);
 
 	if (log_file.is_open()) log(LogLevel::Info, "Logger initialized", false);
-	else std::cerr << std::format("Error: Couldn't open log file `{}`\nThe bot would run, but without logging features", file_name);
+	else std::cerr << ConsoleColour::Yellow
+		<< std::format("Error: Couldn't open log file `{}`\nThe bot would run, but without logging features\n", file_name) << ConsoleColour::Reset;
 }
 
 Logger::~Logger() {
@@ -45,6 +46,8 @@ Logger::~Logger() {
 void Logger::log(const LogLevel level, const std::string& message, const bool to_be_printed) {
 	if (!log_file.is_open()) return;
 
+	std::scoped_lock lock(log_file_mutex);
+
 	const auto now = std::chrono::system_clock::now();
 	std::string timestamp = std::format("[{:%d %m %Y %a %H:%M:%S}]", now);
 
@@ -53,35 +56,34 @@ void Logger::log(const LogLevel level, const std::string& message, const bool to
 	switch (level) {
 		case LogLevel::Info: {
 			level_to_str = "[INFO]";
-			if (to_be_printed) std::cout << level_to_str + ' ' + message << std::endl;
+			if (to_be_printed) std::cout << ConsoleColour::Cyan << level_to_str + ' ' + message << ConsoleColour::Reset << std::endl;
 			break;
 		}
 		case LogLevel::Warn: {
 			level_to_str = "[WARN]";
-			if (to_be_printed) std::cout << level_to_str + ' ' + message << std::endl;
+			if (to_be_printed) std::cout << ConsoleColour::Yellow << level_to_str + ' ' + message << ConsoleColour::Reset << std::endl;
 			break;
 		}
 		case LogLevel::Error: {
 			level_to_str = "[ERROR]";
-			if (to_be_printed) std::cerr << level_to_str + ' ' + message << std::endl;
+			if (to_be_printed) std::cerr << ConsoleColour::Red << level_to_str + ' ' + message << ConsoleColour::Reset << std::endl;
 			break;
 		}
 		case LogLevel::Critical: {
 			level_to_str = "[CRITICAL]";
-			if (to_be_printed) std::cerr << level_to_str + ' ' + message << std::endl;
+			if (to_be_printed) std::cerr << ConsoleColour::Red << level_to_str + ' ' + message << ConsoleColour::Reset << std::endl;
 			break;
 		}
 		case LogLevel::Exception: {
 			level_to_str = "[EXCEPTION THROWN]";
-			if (to_be_printed) std::cerr << level_to_str + ' ' + message << std::endl;
+			if (to_be_printed) std::cerr << ConsoleColour::Red << level_to_str + ' ' + message << ConsoleColour::Reset << std::endl;
 			break;
 		}
 		default: {
 			level_to_str = "[LEVEL UNKNOWN]";
-			if (to_be_printed) std::cerr << level_to_str + ' ' + message << std::endl;
+			if (to_be_printed) std::cerr << ConsoleColour::Red << level_to_str + ' ' + message << ConsoleColour::Reset << std::endl;
 			break;
 		}
 	}
-
 	log_file << std::format("{} {} {}", timestamp, level_to_str, message) << std::endl;
 }

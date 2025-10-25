@@ -26,13 +26,16 @@
 #include <future>
 #include <sstream>
 #include <variant>
+#include <memory>
+#include <mutex>
 
-#include "../Ishmael/Ishmael.hpp"
-#include "../Ishmael/commands/ICommands.hpp"
-#include "../Ishmael/utilities/logger/logger.hpp"
-#include "../Ishmael/utilities/secrets/secrets.hpp"
-#include "../Ishmael/commands/moderation/mod_utils.hpp"
-#include "../Ishmael/utilities/other_utils/other_utils.hpp"
+#include "Ishmael.hpp"
+#include "commands/ICommands.hpp"
+#include "utilities/logger/logger.hpp"
+#include "utilities/secrets/secrets.hpp"
+#include "commands/moderation/mod_utils.hpp"
+#include "utilities/other_utils/other_utils.hpp"
+#include "utilities/console_utils/console_utils.hpp"
 
 #include <dpp/snowflake.h>
 #include <dpp/cluster.h>
@@ -46,10 +49,12 @@
 #include <dpp/restresults.h>
 #include <dpp/permissions.h>
 
-static Logger* g_current_logger = nullptr;
-Logger& get_logger() {
-	if (!g_current_logger) throw std::runtime_error("Logger accessed before it was initialized for the current session");
-	return *g_current_logger;
+static std::shared_ptr<Logger> g_current_logger = nullptr;
+static std::mutex g_logger_mutex;
+std::shared_ptr<Logger> get_logger() {
+	std::scoped_lock lock(g_logger_mutex);
+	if (!g_current_logger) throw std::runtime_error("Logger accessed before it was initialized for current session");
+	return g_current_logger;
 }
 
 std::chrono::steady_clock::time_point session_start_time;
@@ -64,7 +69,7 @@ static std::thread shutdown_thread;
 
 static void initiate_shutdown() {
 	if (!bot_ptr) return;
-	get_logger().log(LogLevel::Warn, "Shutdown signal received. Cleaning up commands.", true);
+	get_logger()->log(LogLevel::Warn, "Shutdown signal received. Cleaning up commands.", true);
 
 	std::promise<void> global_delete_promise, guild_delete_promise;
 	std::future<void> global_delete_future = global_delete_promise.get_future();
@@ -87,39 +92,39 @@ static void initiate_shutdown() {
 			dpp::snowflake dev_guild_id(secrets.at("DEV_GUILD_ID"));
 			bot_ptr->guild_bulk_command_delete(dev_guild_id, [&](const dpp::confirmation_callback_t& callback) {
 				if (callback.is_error()) {
-					get_logger().log(LogLevel::Error, "Failed to bulk delete guild commands: " + callback.get_error().message, true);
+					get_logger()->log(LogLevel::Error, "Failed to bulk delete guild commands: " + callback.get_error().message, true);
 				}
 				else {
-					get_logger().log(LogLevel::Info, "Successfully bulk deleted guild commands.", true);
+					get_logger()->log(LogLevel::Info, "Successfully bulk deleted guild commands.", true);
 				}
 				guild_delete_promise.set_value();
 			});
 		}
 		catch (const std::exception& e) {
-			get_logger().log(LogLevel::Exception, "Exception during guild command deletion: " + std::string(e.what()), true);
+			get_logger()->log(LogLevel::Exception, "Exception during guild command deletion: " + std::string(e.what()), true);
 			guild_delete_promise.set_value();
 		}
 	}
 	else {
-		get_logger().log(LogLevel::Info, "Skipped deleting guild commands as none were registered.", true);
+		get_logger()->log(LogLevel::Info, "Skipped deleting guild commands as none were registered.", true);
 		guild_delete_promise.set_value();
 	}
 
 	// Delete global commands
 	bot_ptr->global_bulk_command_delete([&](const dpp::confirmation_callback_t& callback) {
 		if (callback.is_error()) {
-			get_logger().log(LogLevel::Error, "Failed to bulk delete global commands: " + callback.get_error().message, true);
+			get_logger()->log(LogLevel::Error, "Failed to bulk delete global commands: " + callback.get_error().message, true);
 		}
 		else {
-			get_logger().log(LogLevel::Info, "Successfully bulk deleted all global commands.", true);
+			get_logger()->log(LogLevel::Info, "Successfully bulk deleted all global commands.", true);
 		}
 		global_delete_promise.set_value();
 		});
 
-	get_logger().log(LogLevel::Info, "Waiting for command deletions to complete", true);
+	get_logger()->log(LogLevel::Info, "Waiting for command deletions to complete", true);
 	global_delete_future.wait();
 	guild_delete_future.wait();
-	get_logger().log(LogLevel::Info, "Command cleanups finished.", true);
+	get_logger()->log(LogLevel::Info, "Command cleanups finished.", true);
 
 	// Now that cleanup is done, we can safely shut down the cluster
 	std::this_thread::sleep_for(std::chrono::seconds(2));
@@ -152,6 +157,9 @@ static BOOL WINAPI CtrlHandler(DWORD FdwCtrlType) {
 #endif
 
 int main() {
+#ifdef _WIN32
+	setup_console(); // From `console_utils.hpp`
+#endif
 	/*
 	* One Time Setup
 	* This outer try-catch handles the `secrets` map
@@ -165,14 +173,14 @@ int main() {
 		if (secrets.find("BOT_TOKEN") == secrets.end()) throw std::runtime_error("BOT_TOKEN not found in decrypted secrets");
 		if (secrets.find("DEV_GUILD_ID") == secrets.end()) throw std::runtime_error("DEV_GUILD_ID not found in decrypted secrets");
 
-		std::cout << "Secrets loaded successfully!" << std::endl;
+		std::cout << ConsoleColour::Green << "Secrets loaded successfully!" << ConsoleColour::Reset << std::endl;
 	}
 	catch (const std::exception& e) {
-		std::cerr << "Fatal exception before startup: " << e.what() << std::endl;
+		std::cerr << ConsoleColour::Red << "Fatal exception before startup: " << e.what() << ConsoleColour::Reset << std::endl;
 		return 1;
 	}
 	catch (...) {
-		std::cerr << "Unknown exception occured" << std::endl;
+		std::cerr << ConsoleColour::Red << "Unknown exception occured" << ConsoleColour::Reset << std::endl;
 		return 1;
 	}
 	/*
@@ -180,30 +188,30 @@ int main() {
 	* Should any exception be thrown, the bot would automatically try to recover itself
 	* by restarting 10 seconds after the exception throw
 	*/
-
-	// A shared_ptr outside the loop to manage logger lifetime.
-	std::shared_ptr<Logger> session_logger_ptr;
 	while (!shutting_down) {
 		/*
 		* Create a new `Logger` object on the stack for this session
 		* A new log file would be created. When this loop ineration ends,
 		* the object is automatically destroyed, closing the log file.
 		*/
-		session_logger_ptr = std::make_shared<Logger>();
-		g_current_logger = session_logger_ptr.get(); // Update the global pointer
+		// Create the new logger and assign it to the global pointer
+		{
+			std::scoped_lock lock(g_logger_mutex);
+			g_current_logger = std::make_shared<Logger>();
+		}
 		const std::string BOT_TOKEN = secrets.at("BOT_TOKEN");
 
 		dpp::cluster bot(BOT_TOKEN);
 		bot_ptr = &bot; // Assign the bot instance to the global ptr
 
 		try {
-			get_logger().log(LogLevel::Info, "Ishmael session starting", true);
+			get_logger()->log(LogLevel::Info, "Ishmael session starting", true);
 
 			session_start_time = std::chrono::steady_clock::now(); // dpp::discord_client::get_uptime() probably could also be used
 
 #ifdef _WIN32
 			if (!SetConsoleCtrlHandler(CtrlHandler, TRUE)) {
-				get_logger().log(LogLevel::Critical, "Couldn't set Windows control handler", true);
+				get_logger()->log(LogLevel::Critical, "Couldn't set Windows control handler", true);
 				return 1;
 			}
 #else
@@ -212,9 +220,9 @@ int main() {
 #endif
 
 			bot.on_log([&](const dpp::log_t& event) {
-				if (event.severity == dpp::ll_warning) get_logger().log(LogLevel::Warn, event.message, false);
-				if (event.severity == dpp::ll_error) get_logger().log(LogLevel::Error, event.message, false);
-				if (event.severity == dpp::ll_critical) get_logger().log(LogLevel::Critical, event.message, false);
+				if (event.severity == dpp::ll_warning) get_logger()->log(LogLevel::Warn, event.message, false);
+				if (event.severity == dpp::ll_error) get_logger()->log(LogLevel::Error, event.message, false);
+				if (event.severity == dpp::ll_critical) get_logger()->log(LogLevel::Critical, event.message, false);
 			});
 
 			// Load guild settings from JSON file
@@ -236,7 +244,7 @@ int main() {
 				if (it != commands.end()) it->second.function(bot, event);
 				else {
 					event.reply(dpp::message("Unknown command").set_flags(dpp::m_ephemeral));
-					get_logger().log(LogLevel::Warn, "Received an unknown command: " + command_name, false);
+					get_logger()->log(LogLevel::Warn, "Received an unknown command: " + command_name, false);
 				}
 			});
 
@@ -296,7 +304,7 @@ int main() {
 				if (dpp::run_once<struct log_connections>()) {
 					bot.get_gateway_bot([&bot](const dpp::confirmation_callback_t& gateway_callback) {
 						if (gateway_callback.is_error()) {
-							get_logger().log(LogLevel::Error, "Failed to get gateway details: " + gateway_callback.get_error().message, true);
+							get_logger()->log(LogLevel::Error, "Failed to get gateway details: " + gateway_callback.get_error().message, true);
 							return;
 						}
 
@@ -311,10 +319,10 @@ int main() {
 								<< "  - Session Start Reset After: " << convert_time(gw.session_start_reset_after / 1000);
 
 							const std::string gateway_info = ss.str();
-							get_logger().log(LogLevel::Info, gateway_info, true);
+							get_logger()->log(LogLevel::Info, gateway_info, true);
 						}
 						catch (const std::bad_variant_access& e) {
-							get_logger().log(LogLevel::Error, "Bad variant access on gateway callback: " + std::string(e.what()), true);
+							get_logger()->log(LogLevel::Error, "Bad variant access on gateway callback: " + std::string(e.what()), true);
 						}
 					});
 				}
@@ -323,29 +331,32 @@ int main() {
 				dpp::presence birds(dpp::ps_online, dpp::at_listening, "birds!");
 				bot.set_presence(birds);
 
-				get_logger().log(LogLevel::Info, "Logged in as " + bot.me.format_username(), true);
+				get_logger()->log(LogLevel::Info, "Logged in as " + bot.me.format_username(), true);
 			});
 			bot.start(dpp::st_wait);
 		}
 		catch (const dpp::exception& e) {
-			get_logger().log(LogLevel::Exception, "D++ Exception: " + std::string(e.what()), true);
+			get_logger()->log(LogLevel::Exception, "D++ Exception: " + std::string(e.what()), true);
 		}
 		catch (const std::exception& e) {
-			get_logger().log(LogLevel::Exception, "Standard Exception: " + std::string(e.what()), true);
+			get_logger()->log(LogLevel::Exception, "Standard Exception: " + std::string(e.what()), true);
 		}
 		catch (...) {
-			get_logger().log(LogLevel::Exception, "Unknown exception thrown", true);
+			get_logger()->log(LogLevel::Exception, "Unknown exception thrown", true);
 		}
 
 		// bot.start() has returned, so the bot is disconnected
-		get_logger().log(LogLevel::Warn, "Bot session ended", true);
+		get_logger()->log(LogLevel::Warn, "Bot session ended", true);
 
 		// If `shutting_down` is false, the bot crashed
 		// We are to wait 10 seconds before trying to reconnect
 		if (!shutting_down) {
-			g_current_logger = nullptr; // Invalidate the pointer
-
-			std::cout << "Reconnecting in 10 seconds..." << std::endl;
+			// Destroy the old logger
+			{
+				std::scoped_lock lock(g_logger_mutex);
+				g_current_logger.reset(); // or g_current_logger = nullptr;
+			}
+			std::cout << ConsoleColour::Yellow << "Reconnecting in 10 seconds..." << ConsoleColour::Reset << std::endl;
 			std::this_thread::sleep_for(std::chrono::seconds(10));
 		}
 	}
@@ -354,6 +365,6 @@ int main() {
 		shutdown_thread.join();
 	}
 	g_current_logger = nullptr;
-	std::cout << "The bot has shut down" << std::endl;
+	std::cout << ConsoleColour::Cyan << "The bot has shut down" << ConsoleColour::Reset << std::endl;
 	return 0;
 }

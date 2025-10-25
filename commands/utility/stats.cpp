@@ -22,8 +22,8 @@
 #include <exception>
 #include <cstdint>
 
-#include "../Ishmael/Ishmael.hpp"
-#include "../Ishmael/utilities/other_utils/other_utils.hpp"
+#include "Ishmael.hpp"
+#include "utilities/other_utils/other_utils.hpp"
 
 #include <dpp/cache.h>
 #include <dpp/cluster.h>
@@ -75,15 +75,15 @@ static void handle_stats(dpp::cluster& bot, const dpp::slashcommand_t& event) {
 		event.reply(dpp::message(event.command.channel_id, embed).set_flags(dpp::m_ephemeral));
 	}
 	catch (const dpp::exception& e) {
-		get_logger().log(LogLevel::Exception, "D++ exception thrown in `/stats`: " + std::string(e.what()), false);
+		get_logger()->log(LogLevel::Exception, "D++ exception thrown in `/stats`: " + std::string(e.what()), false);
 		event.reply(dpp::message("An exception was thrown while processing this command.").set_flags(dpp::m_ephemeral));
 	}
 	catch (const std::exception& e) {
-		get_logger().log(LogLevel::Exception, "Standard exception thrown in `/stats`: " + std::string(e.what()), false);
+		get_logger()->log(LogLevel::Exception, "Standard exception thrown in `/stats`: " + std::string(e.what()), false);
 		event.reply(dpp::message("An exception was thrown while processing this command.").set_flags(dpp::m_ephemeral));
 	}
 	catch (...) {
-		get_logger().log(LogLevel::Exception, "Unknown exception thrown in `/stats`", false);
+		get_logger()->log(LogLevel::Exception, "Unknown exception thrown in `/stats`", false);
 		event.reply(dpp::message("An exception was thrown while processing this command.").set_flags(dpp::m_ephemeral));
 	}
 }

@@ -27,12 +27,13 @@
 #include <cstdlib>
 #include <map>
 
+#include "secrets.hpp"
+#include "get_secret_input.hpp"
+#include "utilities/console_utils/console_utils.hpp"
+
 #include <sodium/core.h>
 #include <sodium/crypto_secretstream_xchacha20poly1305.h>
 #include <sodium/utils.h>
-
-#include "secrets.hpp"
-#include "get_secret_input.hpp"
 
 static std::map<std::string, std::string> load_and_decrypt_secrets() {
 	if (sodium_init() < 0) {
@@ -124,13 +125,13 @@ const std::map<std::string, std::string> secrets = [] {
 		return load_and_decrypt_secrets();
 	}
 	catch (std::exception& e) {
-		std::cerr << "Exception thrown during secrets initialization: " << e.what();
-		std::cerr << "\nProgram will now terminate" << std::endl;
+		std::cerr << ConsoleColour::Red << "Exception thrown during secrets initialization: " << e.what()
+			<< "\nProgram will now terminate" << ConsoleColour::Reset << std::endl;
 		std::exit(EXIT_FAILURE);
 	}
 	catch (...) {
-		std::cerr << "Unknown exception during secrets initialization";
-		std::cerr << "\nProgram will now terminate" << std::endl;
+		std::cerr << ConsoleColour::Red << "Unknown exception during secrets initialization"
+			<< "\nProgram will now terminate" << ConsoleColour::Reset << std::endl;
 		std::exit(EXIT_FAILURE);
 	}
 }();

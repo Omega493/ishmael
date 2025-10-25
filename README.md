@@ -25,12 +25,10 @@ This project requires the following libraries:
 
 1.  **Clone the Repository**
 
-    The #include in the source files use a relative path sceheme. Thus, the folder/file names must be accurate (my fault, I know). I'll try to fix it soon. But for now, cloning the repo is a two step process - first clone the repo, and then rename it.
-
+    Run the following command in a PowerShell / Windows Terminal session:
     ```powershell
     git clone https://github.com/Omega493/ishmael.git
-    Rename-Item -Path "ishmael" -NewName "temp"; Rename-Item -Path "temp" -NewName "Ishmael"
-    cd Ishmael
+    cd ishmael
     ```
 
 2.  **Install vcpkg and Dependencies**:

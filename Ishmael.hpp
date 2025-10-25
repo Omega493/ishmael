@@ -22,8 +22,9 @@
 #include <map>
 #include <functional>
 #include <cstdint>
+#include <memory>
 
-#include "../Ishmael/utilities/logger/logger.hpp"
+#include "utilities/logger/logger.hpp"
 
 #include <dpp/dispatcher.h>
 #include <dpp/cluster.h>
@@ -58,4 +59,4 @@ struct select_handler_t {
 extern std::map<std::string, select_handler_t> select_handlers;
 
 // Function to get the global logger instance
-Logger& get_logger();
+std::shared_ptr<Logger> get_logger();

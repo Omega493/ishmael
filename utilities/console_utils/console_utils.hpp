@@ -9,7 +9,7 @@
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
+* GNU General Public License for more details.f
 
 * You should have received a copy of the GNU General Public License
 * along with this program. If not, see <https://www.gnu.org/licenses/>.
@@ -18,31 +18,15 @@
 #pragma once
 
 #include <string>
-#include <fstream>
-#include <mutex>
 
-enum class LogLevel {
-	Info,
-	Warn,
-	Error,
-	Critical,
-	Exception,
-	Unknown
-};
+namespace ConsoleColour {
+    const std::string Reset = "\033[0m"; // Reset text colour
+    const std::string Red = "\033[31m"; // Used for exceptions / errors
+    const std::string Green = "\033[32m"; // Used for success-category messages
+    const std::string Yellow = "\033[33m"; // Used for warnings
+    const std::string Cyan = "\033[36m"; // Used for info
+}
 
-class Logger {
-public:
-	Logger();
-	~Logger();
-
-	/*
-	* @brief The logging function
-	* @param level The log level of the message
-	* @param message The message itself
-	* @param to_be_printed If true, prints the message to the terminal
-	*/
-	void log(const LogLevel level, const std::string& message, const bool to_be_printed);
-private:
-	std::ofstream log_file;
-	mutable std::mutex log_file_mutex;
-};
+#ifdef _WIN32
+void setup_console();
+#endif
