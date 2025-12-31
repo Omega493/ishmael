@@ -15,48 +15,57 @@
 * along with this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
+#ifndef ISHMAEL_HPP
+#define ISHMAEL_HPP
+
 #pragma once
 
-#include <string>
-#include <vector>
-#include <map>
-#include <functional>
-#include <cstdint>
-#include <memory>
+/*
+ * The following includes are performed:
+ * #include <vector>
+ * #include <unordered_map>
+ * #include <string>
+ * #include <functional>
+ * #include <memory>
+ * #include <cstdint>
+ * #include <dpp/dispatcher.h>
+ * #include <dpp/cluster.h>
+ * #include <logger/logger.hpp>
+ */
 
-#include "utilities/logger/logger.hpp"
-
-#include <dpp/dispatcher.h>
-#include <dpp/cluster.h>
+#include <pch.hpp>
 
 // Type alias for the function that will handle a command
-using command_function = std::function<void(dpp::cluster&, const dpp::slashcommand_t&)>;
+// using command_function = std::function<void(dpp::cluster&, const dpp::slashcommand_t&)>;
 
 // A struct to hold information about a command
 struct command_t {
-	command_function function;
+	std::function<void(dpp::cluster&, const dpp::slashcommand_t&)> function;
 	std::string description;
 	uint64_t permissions;
-	bool is_restricted_to_owners; // Restriction to dev guild
+	bool is_restricted_to_owners{ false }; // Restriction to dev guild
 	std::vector<dpp::command_option> options;
 };
 
 // The global map that stores all commands
 // The key is the command's name
-extern std::map<std::string, command_t> commands;
+extern std::unordered_map<std::string, command_t> commands;
 
 // Type alias for a function that handles a select menu click
-using select_handler_function = std::function<void(dpp::cluster& bot, const dpp::select_click_t&)>;
+// using select_handler_function = std::function<void(dpp::cluster& bot, const dpp::select_click_t&)>;
 
 // A struct to hold the information of select handlers
 struct select_handler_t {
-	select_handler_function function;
+	std::function<void(dpp::cluster& bot, const dpp::select_click_t&)> function;
 	uint64_t required_permissions;
 };
 
 // The global map that stores all select menu handlers
 // Its key is the custom ID (ex. `setup_role_edits_logging_channel`)
-extern std::map<std::string, select_handler_t> select_handlers;
+extern std::unordered_map<std::string, select_handler_t> select_handlers;
 
-// Function to get the global logger instance
-std::shared_ptr<Logger> get_logger();
+constexpr uint64_t one_hour{ 60 * 60 };
+constexpr uint64_t one_day{ one_hour * 24 };
+constexpr uint64_t twelve_hours{ one_day / 2 };
+
+#endif // ISHMAEL_HPP

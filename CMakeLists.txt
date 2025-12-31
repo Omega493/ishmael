@@ -2,11 +2,10 @@
 
 project("Ishmael")
 
-add_executable(Ishmael "Ishmael.cpp" "Ishmael.hpp"
+add_executable(Ishmael "Ishmael.cpp" "Ishmael.hpp" "include/pch.hpp"
     # Bot's utilities
-    "utilities/secrets/get_secret_input.hpp" "utilities/secrets/get_secret_input.cpp" "utilities/secrets/secrets.hpp"
-    "utilities/secrets/secrets.cpp" "utilities/logger/logger.hpp" "utilities/logger/logger.cpp"
-    "utilities/console_utils/console_utils.hpp" "utilities/console_utils/console_utils.cpp"
+    "utilities/secrets/secrets.hpp" "utilities/secrets/secrets.cpp" "utilities/exception/exception.hpp"
+    "utilities/logger/logger.hpp" "utilities/logger/logger.cpp" "utilities/console_utils/console_utils.hpp"
     "utilities/other_utils/other_utils.hpp" "utilities/other_utils/other_utils.cpp"
     
     # Bot's command handler
@@ -19,24 +18,21 @@ add_executable(Ishmael "Ishmael.cpp" "Ishmael.hpp"
     "commands/moderation/mod_utils.hpp" "commands/moderation/mod_utils.cpp"
 
     # Moderation commands
-    "commands/moderation/role_edits/role_add.cpp")
+    "commands/moderation/role_edits/role_add.cpp"
+)
 
-target_include_directories(Ishmael PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(Ishmael PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/utilities ${CMAKE_CURRENT_SOURCE_DIR}/commands
+)
 
 # DPP
 find_package(dpp REQUIRED)
-
 target_link_libraries(Ishmael PRIVATE dpp::dpp)
 
-# sodium
+# libsodium
 if(WIN32)
-    find_package(unofficial-sodium REQUIRED)
-
-    if(NOT TARGET sodium::sodium)
-        add_library(sodium::sodium ALIAS unofficial-sodium::sodium)
-    endif()
-
-    target_link_libraries(Ishmael PRIVATE sodium::sodium)
+    find_package(unofficial-sodium CONFIG REQUIRED)
+    target_link_libraries(Ishmael PRIVATE unofficial-sodium::sodium)
 else()
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(SODIUM REQUIRED libsodium)
@@ -45,5 +41,9 @@ else()
 
     target_link_libraries(Ishmael PRIVATE ${SODIUM_LIBRARIES})
 endif()
+
+# spdlog
+find_package(spdlog CONFIG REQUIRED)
+target_link_libraries(Ishmael PRIVATE spdlog::spdlog)
 
 set_property(TARGET Ishmael PROPERTY CXX_STANDARD 20)

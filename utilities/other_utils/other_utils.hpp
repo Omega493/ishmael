@@ -15,20 +15,27 @@
 * along with this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
+#ifndef OTHER_UTILS_HPP
+#define OTHER_UTILS_HPP
+
 #pragma once
 
-#include <string>
-#include <cstdint>
-#include <optional>
+/*
+ * The following includes are performed:
+ * #include <string>
+ * #include <optional>
+ * #include <cstdint>
+ * #include <dpp/cluster.h>
+ */
 
-#include <dpp/cluster.h>
+#include <pch.hpp>
 
 /*
  * @brief Formats a duration in seconds into a human-readable string (d:h:m:s)
  * @param total_seconds The total number of seconds to format
  * @return A formatted string in the format "Xd Yh Zm Ws"
 */
-std::string convert_time(uint64_t total_seconds);
+inline std::string convert_time(uint64_t total_seconds);
 
 enum class CommandType {
 	RoleEdit,
@@ -36,12 +43,13 @@ enum class CommandType {
 	Unknown
 };
 
-// For the JSON
+std::optional<uint64_t> get_log_channel(const uint64_t guild_id, const CommandType command_type);
+void save_log_channel(const uint64_t guild_id, const uint64_t channel_id, const CommandType command_type);
+
 void load_guild_settings();
-void write_guild_settings_to_file();
-std::optional<uint64_t> get_log_channel(uint64_t guild_id, CommandType command_type);
-void save_log_channel(uint64_t guild_id, uint64_t channel_id, CommandType command_type);
 
 // Backup handling
 void backup_guild_settings(const std::string& backup_file_path);
 void initialize_backups(dpp::cluster& bot);
+
+#endif // OTHER_UTILS_HPP

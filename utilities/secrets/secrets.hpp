@@ -15,11 +15,19 @@
 * along with this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
+#ifndef SECRETS_HPP
+#define SECRETS_HPP
+
 #pragma once
 
-#include <string>
-#include <map>
+/*
+ * The following includes are performed:
+ * #include <string>
+ * #include <unordered_map>
+ */
 
-extern const std::map<std::string, std::string> secrets;
+#include <pch.hpp>
 
-std::map<std::string, std::string> load_and_decrypt_secrets();
+extern const std::unordered_map<std::string, std::string> secrets;
+
+#endif // SECRETS_HPP

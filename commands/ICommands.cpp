@@ -15,7 +15,12 @@
 * along with this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "ICommands.hpp"
+/*
+ * The following include is performed:
+ * #include <ICommands.hpp>
+ */
+
+#include <pch.hpp>
 
 // This creates a central registry
 // Whenever a new command is created, its registration function is called here

@@ -15,80 +15,71 @@
 * along with this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <string>
-#include <ctime>
-#include <exception>
-#include <cstdint>
-#include <variant>
-#include <optional>
-#include <type_traits>
+/*
+ * The following includes are performed:
+ * #include <string>
+ * #include <exception>
+ * #include <variant>
+ * #include <optional>
+ * #include <type_traits>
+ * #include <ctime>
+ * #include <cstdint>
+ * #include <dpp/appcommand.h>
+ * #include <dpp/cache.h>
+ * #include <dpp/cluster.h>
+ * #include <dpp/message.h>
+ * #include <dpp/dispatcher.h>
+ * #include <dpp/permissions.h>
+ * #include <dpp/exception.h>
+ * #include <dpp/guild.h>
+ * #include <dpp/role.h>
+ * #include <dpp/snowflake.h>
+ * #include <mod_utils.hpp>
+ * #include <Ishmael.hpp>
+ * #include <utilities/logger/logger.hpp>
+ * #include <utilities/other_utils/other_utils.hpp>
+ */
 
-#include "mod_utils.hpp"
-#include "Ishmael.hpp"
-#include "utilities/logger/logger.hpp"
-#include "utilities/other_utils/other_utils.hpp"
-
-#include <dpp/appcommand.h>
-#include <dpp/cache.h>
-#include <dpp/cluster.h>
-#include <dpp/message.h>
-#include <dpp/dispatcher.h>
-#include <dpp/permissions.h>
-#include <dpp/exception.h>
-#include <dpp/guild.h>
-#include <dpp/role.h>
-#include <dpp/snowflake.h>
+#include <pch.hpp>
 
 dpp::permission calculate_permissions(const dpp::guild_member& member) {
 	// Find the guild from cache
-	dpp::guild* g = dpp::find_guild(member.guild_id);
+	const dpp::guild* g{ dpp::find_guild(member.guild_id) };
 
-	// If guild isn't cached, we can't get @everyone role.
+	// If guild isn't cached, we can't get @everyone role
 	// We have to fallback to this logic, even thought it may be inaccurate
 	if (!g) {
-		dpp::permission perms;
+		dpp::permission perms{};
 		for (const dpp::snowflake role_id : member.get_roles()) {
-			dpp::role* r = dpp::find_role(role_id);
-			if (r) {
-				perms |= r->permissions;
-			}
+			const dpp::role* r{ dpp::find_role(role_id) };
+			if (r) perms |= r->permissions;
 		}
 		return perms;
 	}
 
 	// If the guild is cached, we start with the @everyone role's perms
-	// The @everyone role always has the same ID as the guild.
-	dpp::role* everyone_role = dpp::find_role(g->id);
+	const dpp::role* everyone_role{ dpp::find_role(g->id) };
 	// If the @everyone role is found, we start from its perms, else we start with 0
-	dpp::permission perms = everyone_role ? everyone_role->permissions : dpp::permission(0);
+	dpp::permission perms{ everyone_role ? everyone_role->permissions : dpp::permission{ 0 } };
 
 	// Now we OR all other roles the member has, as
 	// member.get_roles() does not include the @everyone role.
-	for (const dpp::snowflake role_id : member.get_roles()) {
-		dpp::role* r = dpp::find_role(role_id);
-		if (r) {
-			perms |= r->permissions;
-		}
-	}
+	for (const dpp::snowflake role_id : member.get_roles()) if (const dpp::role * r{ dpp::find_role(role_id) }) perms |= r->permissions;
 	return perms;
 }
 
 uint16_t get_highest_role_position(const dpp::guild_member& member) {
-	uint16_t highest_pos = 0;
+	uint16_t highest_pos{ 0 };
 	for (const auto& role_id : member.get_roles()) {
-		dpp::role* r = dpp::find_role(role_id);
-		if (r && r->position > highest_pos) {
-			highest_pos = r->position;
-		}
+		const dpp::role* r{ dpp::find_role(role_id) };
+		if (r && r->position > highest_pos) highest_pos = r->position;
 	}
 	return highest_pos;
 }
 
 std::string get_reason_from_event(const dpp::slashcommand_t& event) {
-	auto reason_param = event.get_parameter("reason");
-	if (std::holds_alternative<std::string>(reason_param)) {
-		return std::get<std::string>(reason_param);
-	}
+	const auto reason_param{ event.get_parameter("reason") };
+	if (std::holds_alternative<std::string>(reason_param)) return std::get<std::string>(reason_param);
 	return "No reason provided.";
 }
 
@@ -96,38 +87,48 @@ void send_audit_log(dpp::cluster& bot, const dpp::slashcommand_t& event, Command
 	const std::string& title, const dpp::guild_member& target_user, const dpp::guild_member& issuer_member,
 	AuditLogTarget target_obj, const std::string& reason) {
 	try {
-		auto log_channel_id_opt = get_log_channel(event.command.guild_id, command_type);
+		const auto log_channel_id_opt{ get_log_channel(event.command.guild_id, command_type) };
 
 		if (!log_channel_id_opt.has_value()) return;
 
-		const dpp::snowflake log_channel_id = log_channel_id_opt.value();
+		const dpp::snowflake log_channel_id{ log_channel_id_opt.value() };
 
-		std::string event_type = [command_type]() -> std::string {
+		const std::string event_type{ [command_type]() -> std::string {
 			switch (command_type) {
 			case CommandType::RoleEdit: return "Role";
 			case CommandType::BanEdit: return "Ban";
 			default: return "Unknown";
 			}
-		}();
+		}() };
 
-		dpp::embed log_embed = dpp::embed()
+		const std::string thumbnail_url{ [&target_user]() -> std::string {
+			const std::string guild_avatar_url{ target_user.get_avatar_url(128, dpp::i_png, true) };
+
+			if (guild_avatar_url.empty()) {
+				const dpp::user* user{ target_user.get_user() };
+				if (!user) return "";
+
+				const std::string avatar_url{ user->get_avatar_url(128, dpp::i_png, true) };
+				if (avatar_url.empty()) return user->get_default_avatar_url();
+				return avatar_url;
+			}
+			return guild_avatar_url;
+		}() };
+
+		dpp::embed log_embed{ dpp::embed()
 			.set_color(colour)
 			.set_title(title)
-			.set_thumbnail(target_user.get_avatar_url())
+			.set_thumbnail(thumbnail_url)
 			.add_field("Target User", target_user.get_mention(), true)
-			.add_field("Moderator", issuer_member.get_mention(), true);
+			.add_field("Moderator", issuer_member.get_mention(), true) };
 
 		// We visit the target_obj variant and the lambda handles the type
 		std::visit([&log_embed](auto&& arg) {
 			// gett the type of the object inside the variant
 			using T = std::decay_t<decltype(arg)>;
-			if constexpr (std::is_same_v<T, const dpp::role*>) {
-				log_embed.add_field("Role", arg->get_mention(), false);
-			}
-			else if constexpr (std::is_same_v<T, std::monostate>) {
-				// It's monostate, we add no field
-			}
-		}, target_obj);
+			if constexpr (std::is_same_v<T, const dpp::role*>) log_embed.add_field("Role", arg->get_mention(), false);
+			else if constexpr (std::is_same_v<T, std::monostate>) {} // It's monostate, we add no field
+			}, target_obj);
 
 		// Now we add other fields
 		log_embed.add_field("Reason", reason, false)
@@ -139,12 +140,12 @@ void send_audit_log(dpp::cluster& bot, const dpp::slashcommand_t& event, Command
 		bot.message_create(dpp::message(log_channel_id, log_embed));
 	}
 	catch (const dpp::exception& e) {
-		get_logger()->log(LogLevel::Exception, "D++ exception thrown while trying to send audit log embed: " + std::string(e.what()), false);
+		Logger::exception(false, "D++ exception thrown while trying to send audit log embed: {}", std::string{ e.what() });
 	}
 	catch (const std::exception& e) {
-		get_logger()->log(LogLevel::Exception, "Standard exception thrown while trying to send audit log embed: `" + std::string(e.what()), false);
+		Logger::exception(false, "Standard exception thrown while trying to send audit log embed: {}", std::string{ e.what() });
 	}
 	catch (...) {
-		get_logger()->log(LogLevel::Exception, "Unknown exception thrown while trying to send audit log embed", false);
+		Logger::exception(false, "Unknown exception thrown while trying to send audit log embed");
 	}
 }

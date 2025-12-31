@@ -2,91 +2,70 @@
 
 A C++ Discord bot built using the [dpp](https://dpp.dev/) library. This project includes moderation and utility commands.
 
-## Prerequisites (Windows)
+## Prerequisites
 
-Before building, you must have the following tools installed on your system:
+You need a C++ compiler that supports C++20, the `libsodium` library, openSSL, `dpp`, `spdlog` and 7-Zip.
 
-  * **Git:** For cloning this repository and `vcpkg`
-  * **Visual Studio 2019 or 2022:** With the "Desktop development with C++" workload installed
-  * **CMake:** Version 3.16 or newer
-  * **Ninja:** The build system
-   - Note: The easiest way to get CMake and Ninja is to select "C++ CMake tools for Windows" in the Visual Studio Installer's "Individual components" tab.
-  * A C++ compiler that supports C++20
-  * **vcpkg:** The C++ package manager from Microsoft
+### On Windows
 
-## Dependencies
+The `CMakePresets.json` file provides two presets: 64-bit compilation in debug mode and 64-bit compilation in release mode.
 
-This project requires the following libraries:
+#### MSVC
 
-  * dpp (D++ library)
-  * libsodium
+1. **Install Visual Studio:**
+  * Download and install Visual Studio from the [Visual Studio website](https://visualstudio.microsoft.com/downloads/).
+  * During installation, select the "Desktop development with C++" workload. This will install the compiler and CMake.
 
-## Build Instructions (Windows)
-
-1.  **Clone the Repository**
-
-    Run the following command in a PowerShell / Windows Terminal session:
+2. **Install vcpkg:**
+  * Choose a directory to install `vcpkg`, such as `C:\dev\vcpkg`. Avoid paths with spaces like `Program Files`.
+  * Using Windows Terminal, clone and bootstrap `vcpkg`:
+  ```powershell
+  git clone https://github.com/microsoft/vcpkg.git; cd vcpkg; .\bootstrap-vcpkg.bat
+  ```
+  * Put the path to your `vcpkg` installation as a system environment variable and restart your terminal.
+  
+3. **Install the dependencies:**
+  * Execute the following in a terminal:
     ```powershell
-    git clone https://github.com/Omega493/ishmael.git
-    cd ishmael
+    vcpkg install libsodium:x64-windows dpp:x64-windows spdlog:x64-windows
     ```
 
-2.  **Install vcpkg and Dependencies**:
+4. **Install 7-Zip:**
+  * Go to the [official site of 7-Zip](https://www.7-zip.org/) and download and install it.
 
-    * Choose a directory to install `vcpkg`, such as `C:\dev\vcpkg`. Avoid paths with spaces like `Program Files`.
-    * Using Windows Terminal, clone and bootstrap `vcpkg`:
-      ```powershell
-      git clone https://github.com/microsoft/vcpkg.git
-      cd vcpkg
-      .\bootstrap-vcpkg.bat
-      ```
-    * Install the dependencies using the `x64-windows` triplet.
-      ```powershell
-      .\vcpkg.exe install dpp:x64-windows libsodium:x64-windows
-      ```
-    * Create a new system environment variable:
-        - Variable name: `CMAKE_TOOLCHAIN_FILE`
-        - Variable value: `[path-to-vcpkg]/scripts/buildsystems/vcpkg.cmake`
-    * Restart your terminal session for the new environment variable to take effect.
+4. **Set Environment Variable:**
+  * In your system environment variables, create a new variable:
+    - Variable name: `CMAKE_TOOLCHAIN_FILE`
+    - Variable value: `[path-to-vcpkg]/scripts/buildsystems/vcpkg.cmake`
+  * Add the path to your 7-Zip installation in the system paths.
+  * Restart your terminal session for the new environment variable to take effect.
 
-3. **Set Up Build Environment**
-    
-    All subsequent commands must be run from a `Developer Command Prompt for VS 2022`. This ensures that the C++ compiler (`cl.exe`), CMake, and Ninja are all available in your terminal's PATH. You can find this in your Start Menu (e.g., "x64 Native Tools Command Prompt for VS 2022").
+## Build Instructions 
 
-4.  **Configure with CMake**
+1. **Clone the Repository:**
+  Run the following command in a PowerShell, Windows Terminal or Bash session:
+  ```bash
+  git clone https://github.com/Omega493/ishmael.git
+  ```
 
-    In the developer command prompt, head to the your `Ishmael` directory. Run CMake using a preset to generate the build files. This will automatically select the generator (Ninja) and create the correct build directory as defined in `CMakePresets.json`.
-    Choose one of the following presets to configure:
+2. **Set Up Build Environment:**
+  * Open the cloned folder in Visual Studio, select the preset and press Control-Shift-B to build.
 
-    * **To Configure for Debug:**
-      ```powershell
-      cmake --preset x64-debug
-      ```
+3. **Locate the Executable:**
+  The executable will be in the `binaryDir` specified in the preset. `./build/windows/<preset_name>/Ishmael.exe`
 
-    * **To Configure for Release:**
-      ```powershell
-      cmake --preset x64-release
-      ```
+## Usage
 
-5.  **Build the Project**
+The program is a single executable named `Ishmael`.
 
-    Compile the project using the build preset that matches the configuration you just set up.
+1. Make sure you have a `secrets.enc` file in the same directory as the executable. It should be of the following format:
+  ```txt
+  BOT_TOKEN=
+  DEV_GUILD_ID=
+  OWNER_ID=
+  ```
+  To get the `BOT_TOKEN` head over to [Discord Developer Portal](https://discord.com/developers/applications). To get the `DEV_GUILD_ID` and `OWNER_TOKEN` you need to have "Developer Mode" enabled in your Discord client. Make sure it is encrypted using XChaCha20-Poly1305 AEAD. You can encrypt the text file using [my other tool](https://github.com/Omega493/crypto-utils).
 
-    * **If you configured for Debug:** 
-    ```powershell
-    cmake --build --preset x64-debug
-    ```
-    * **If you configured for Release:**
-    ```powershell
-    cmake --build --preset x64-release
-    ```
+2. Make sure the program has write access to the directory where it is currently located. Logging and creation of `guild_settings.json` will fail otherwise.
 
-6.  **Run**
-
-    The executable will be located in the `build` directory, inside the configuration folder (e.g., `Debug` or `Release`).
-
-    ```bash
-    .\build\Debug\Ishmael.exe
-    ```
-
-This project hasn't yet been tested on Debian / Ubuntu, so no build instructions for now.
+3. Run the program. As the `secrets` map is initialized, you'll be prompted to enter the secret key to the file. Just type the key or paste it in the field.

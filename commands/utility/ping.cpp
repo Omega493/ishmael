@@ -15,69 +15,56 @@
 * along with this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <string>
-#include <format>
-#include <cstdint>
-#include <ctime>
-#include <exception>
+/*
+ * The following includes are performed:
+ * #include <string>
+ * #include <format>
+ * #include <exception>
+ * #include <cstdint>
+ * #include <ctime>
+ * #include <dpp/dispatcher.h>
+ * #include <dpp/discordclient.h>
+ * #include <dpp/message.h>
+ * #include <dpp/cluster.h>
+ * #include <dpp/user.h>
+ * #include <dpp/permissions.h>
+ * #include <dpp/exception.h>
+ * #include <Ishmael.hpp>
+ * #include <utilities/secrets/secrets.hpp>
+ */
 
-#include "Ishmael.hpp"
-#include "utilities/secrets/secrets.hpp"
-
-#include <dpp/dispatcher.h>
-#include <dpp/discordclient.h>
-#include <dpp/message.h>
-#include <dpp/cluster.h>
-#include <dpp/user.h>
-#include <dpp/permissions.h>
-#include <dpp/exception.h>
+#include <pch.hpp>
 
 static void handle_ping(dpp::cluster& bot, const dpp::slashcommand_t& event) {
 	try {
-		uint32_t shard_id = (event.command.guild_id >> 22) % bot.numshards;
-		dpp::discord_client* shard = bot.get_shard(shard_id);
+		const dpp::discord_client* shard{ bot.get_shard((event.command.guild_id >> 22) % bot.numshards) };
 
-		std::string gateway_latency_str = "N/A";
-		if (shard) {
-			double gateway_latency = shard->websocket_ping * 1000;
-			gateway_latency_str = std::format("`{} ms`", std::to_string(static_cast<int>(gateway_latency)));
-		}
+		std::string gateway_latency_str{ "N/A" };
+		if (shard) gateway_latency_str = std::format("`{} ms`", std::to_string(static_cast<int>(shard->websocket_ping * 1000)));
 
-		// Perform a REST ping
-		// This is an asynchronous operation
-		double api_latency = bot.rest_ping * 1000;
-
-		dpp::embed embed = dpp::embed()
+		dpp::embed embed{ dpp::embed()
 			.set_colour(232700) // Hex: #038CFC
 			.set_title("Pong! :ping_pong:")
-			.add_field(
-				"Gateway Latency",
-				gateway_latency_str,
-				true // Inline
-			)
-			.add_field(
-				"API Latency",
-				std::format("`{} ms`", std::to_string(static_cast<int>(api_latency))),
-				true // Inline
-			)
+			.add_field("Gateway Latency", gateway_latency_str, true)
+			.add_field("API Latency", std::format("`{} ms`", std::to_string(static_cast<int>(bot.rest_ping * 1000))), true)
 			.set_footer(dpp::embed_footer()
 				.set_text(event.command.get_issuing_user().username)
 				.set_icon(event.command.get_issuing_user().get_avatar_url()))
-			.set_timestamp(time(0));
+			.set_timestamp(time(0)) };
 		event.reply(dpp::message(event.command.channel_id, embed).set_flags(dpp::m_ephemeral));
 	}
 	catch (const dpp::exception& e) {
-		get_logger()->log(LogLevel::Exception, "D++ exception thrown in `/ping`: " + std::string(e.what()), false);
-		event.reply(dpp::message("An exception was thrown while processing this command. Please inform <@" + std::string(secrets.at("OWNER_ID")) + "> of this.")
+		Logger::exception(false, "D++ exception thrown in `/ping`: {}", std::string{ e.what() });
+		event.reply(dpp::message("An exception was thrown while processing this command. Please inform <@" + std::string{ secrets.at("OWNER_ID") } + "> of this.")
 			.set_flags(dpp::m_ephemeral));
 	}
 	catch (const std::exception& e) {
-		get_logger()->log(LogLevel::Exception, "Standard exception thrown in `/ping`: " + std::string(e.what()), false);
+		Logger::exception(false, "Standard exception thrown in `/ping`: {}", std::string{ e.what() });
 		event.reply(dpp::message("An exception was thrown while processing this command. Please inform <@" + std::string(secrets.at("OWNER_ID")) + "> of this.")
 			.set_flags(dpp::m_ephemeral));
 	}
 	catch (...) {
-		get_logger()->log(LogLevel::Exception, "Unknown exception thrown in `/ping`", false);
+		Logger::exception(false, "Unknown exception thrown in `/ping`");
 		event.reply(dpp::message("An exception was thrown while processing this command. Please inform <@" + std::string(secrets.at("OWNER_ID")) + "> of this.")
 			.set_flags(dpp::m_ephemeral));
 	}

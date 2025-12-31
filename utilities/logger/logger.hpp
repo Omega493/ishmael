@@ -15,34 +15,83 @@
 * along with this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
+#ifndef LOGGER_HPP
+#define LOGGER_HPP
+
 #pragma once
 
-#include <string>
-#include <fstream>
-#include <mutex>
+/*
+ * The following includes are performed:
+ * #include <memory>
+ * #include <format>
+ * #include <spdlog/spdlog.h>
+ */
 
-enum class LogLevel {
-	Info,
-	Warn,
-	Error,
-	Critical,
-	Exception,
-	Unknown
-};
+#include <pch.hpp>
 
 class Logger {
 public:
-	Logger();
-	~Logger();
+    Logger() = delete;
+    Logger(const Logger&) = delete;
+    Logger& operator=(const Logger&) = delete;
+    Logger(Logger&&) = delete;
+    Logger& operator=(Logger&&) = delete;
 
-	/*
-	* @brief The logging function
-	* @param level The log level of the message
-	* @param message The message itself
-	* @param to_be_printed If true, prints the message to the terminal
-	*/
-	void log(const LogLevel level, const std::string& message, const bool to_be_printed);
+    static void info(const std::string& msg); // Directly writes to stdout
+    static void success(const std::string& msg); // Directly writes to stdout
+    static void warn(const std::string& msg); // Directly writes to stdout
+    static void error(const std::string& msg); // Directly writes to stderr
+    static void exception(const std::string& msg); // Directly writes to stderr
+    static void unknown(const std::string& msg); // Directly writes to stderr
+
+    // Uses spdlog and writes to file (and stdout depending on the flag console_output)
+    static void info(const bool console_output, const std::string& msg);
+    // Uses spdlog and writes to file (and stdout depending on the flag console_output)
+    static void warn(const bool console_output, const std::string& msg);
+    // Uses spdlog and writes to file (and stderr depending on the flag console_output)
+    static void error(const bool console_output, const std::string& msg);
+    // Uses spdlog and writes to file (and stderr depending on the flag console_output)
+    static void exception(const bool console_output, const std::string& msg);
+    // Uses spdlog and writes to file (and stderr depending on the flag console_output)
+    static void unknown(const bool console_output, const std::string& msg);
+
+    // Uses spdlog and writes to file (and stdout depending on the flag console_output)
+    template<typename... Args>
+    static void info(const bool console_output, spdlog::format_string_t<Args...> fmt, Args&&... args) {
+        if (const auto log{ get_logger(console_output) }) log->info(fmt, std::forward<Args>(args)...);
+    }
+
+    // Uses spdlog and writes to file (and stdout depending on the flag console_output)
+    template<typename... Args>
+    static void warn(const bool console_output, spdlog::format_string_t<Args...> fmt, Args&&... args) {
+        if (const auto log{ get_logger(console_output) }) log->error(fmt, std::forward<Args>(args)...);
+    }
+
+    // Uses spdlog and writes to file (and stderr depending on the flag console_output)
+    template<typename... Args>
+    static void error(const bool console_output, spdlog::format_string_t<Args...> fmt, Args&&... args) {
+        if (const auto log{ get_logger(console_output) }) log->error(fmt, std::forward<Args>(args)...);
+    }
+
+    // Uses spdlog and writes to file (and stderr depending on the flag console_output)
+    template<typename... Args>
+    static void exception(const bool console_output, spdlog::format_string_t<Args...> fmt, Args&&... args) {
+        if (const auto log{ get_logger(console_output) }) log->critical(fmt, std::forward<Args>(args)...);
+    }
+
+    // Uses spdlog and writes to file (and stderr depending on the flag console_output)
+    template<typename... Args>
+    static void unknown(const bool console_output, spdlog::format_string_t<Args...> fmt, Args&&... args) {
+        if (const auto log{ get_logger(console_output) }) log->critical(fmt, std::forward<Args>(args)...);
+    }
+
 private:
-	std::ofstream log_file;
-	mutable std::mutex log_file_mutex;
+    static std::shared_ptr<spdlog::logger> get_logger(const bool console_output);
+
+    static void init();
+    static void log_scheduler();
+    static void log_rotator();
+    static void log_worker();
 };
+
+#endif // LOGGER_HPP

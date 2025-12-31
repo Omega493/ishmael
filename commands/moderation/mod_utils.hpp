@@ -15,19 +15,25 @@
 * along with this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
+#ifndef MOD_UTILS_HPP
+#define MOD_UTILS_HPP
+
 #pragma once
 
-#include <string>
-#include <cstdint>
-#include <variant>
+/*
+ * The following includes are performed:
+ * #include <string>
+ * #include <variant>
+ * #include <cstdint>
+ * #include <dpp/cluster.h>
+ * #include <dpp/dispatcher.h>
+ * #include <dpp/guild.h>
+ * #include <dpp/permissions.h>
+ * #include <dpp/role.h>
+ * #include <utilities/other_utils/other_utils.hpp>
+ */
 
-#include "utilities/other_utils/other_utils.hpp"
-
-#include <dpp/cluster.h>
-#include <dpp/dispatcher.h>
-#include <dpp/guild.h>
-#include <dpp/permissions.h>
-#include <dpp/role.h>
+#include <pch.hpp>
 
 // Utility functions
 dpp::permission calculate_permissions(const dpp::guild_member& member);
@@ -36,6 +42,8 @@ std::string get_reason_from_event(const dpp::slashcommand_t& event);
 
 // For the audit log embeds
 using AuditLogTarget = std::variant<std::monostate, const dpp::role*>; // TODO: Add other datatypes here
-void send_audit_log(dpp::cluster& bot, const dpp::slashcommand_t& event, CommandType command_type, uint64_t colour,
+void send_audit_log(dpp::cluster& bot, const dpp::slashcommand_t& event, const CommandType command_type, const uint64_t colour,
 	const std::string& title, const dpp::guild_member& target_user, const dpp::guild_member& issuer_member,
-	AuditLogTarget target_obj, const std::string& reason);
+	const AuditLogTarget target_obj, const std::string& reason);
+
+#endif // MOD_UTILS_HPP

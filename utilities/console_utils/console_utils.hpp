@@ -15,18 +15,26 @@
 * along with this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
+#ifndef CONSOLE_UTILS_HPP
+#define CONSOLE_UTILS_HPP
+
 #pragma once
 
-#include <string>
+/*
+ * The following include is performed:
+ * #include <string>
+ */
+
+#include <pch.hpp>
+
+inline std::atomic_bool console_setup_success{ false }; // Flag for ConsoleColour
 
 namespace ConsoleColour {
-    const std::string Reset = "\033[0m"; // Reset text colour
-    const std::string Red = "\033[31m"; // Used for exceptions / errors
-    const std::string Green = "\033[32m"; // Used for success-category messages
-    const std::string Yellow = "\033[33m"; // Used for warnings
-    const std::string Cyan = "\033[36m"; // Used for info
+    inline std::string Reset{}; // Reset text colour
+    inline std::string Red{}; // Used for exceptions / errors
+    inline std::string Green{}; // Used for success-category messages
+    inline std::string Yellow{}; // Used for warnings
+    inline std::string Cyan{}; // Used for info
 }
 
-#ifdef _WIN32
-void setup_console();
-#endif
+#endif // CONSOLE_UTILS_HPP

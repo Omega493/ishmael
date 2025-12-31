@@ -15,6 +15,9 @@
 * along with this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
+#ifndef ICOMMANDS_HPP
+#define ICOMMANDS_HPP
+
 #pragma once
 
 // Main registration functions to be called from `Ishmael.cpp`
@@ -25,3 +28,5 @@ void register_all_select_handlers();
 void register_ping_command();
 void register_stats_command();
 void register_role_add_command();
+
+#endif // ICOMMANDS_HPP
